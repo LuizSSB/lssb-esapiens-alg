@@ -17,7 +17,7 @@ O mecanismo de polia apresentado para o teste funciona por meio de dois elevador
 
 Em síntese, tal verificação pode consistir somente em ordenar as caixas por peso e verificar se a diferença de peso entre duas delas consecutivas não excede o máximo especificado. A razão para isso é que, uma vez confirmado esse detalhe, **sempre** será possível transportá-las todas sem quebrar o mecanismo.
 
-A realocação, então, é feita transportando as caixas, da mais leve para a mais pesada, para lá e de volta; enquanto uma pesada vai, a anterior, mais leve, volta, exceto pela caixa mais pesada, que não é retornada. A partir daí, o processo é reiniciado, mas agora com uma caixa a menos no piso de cá. O ciclo, obviamente, encerra quando todas as caixas terminarem de ser transportadas. 
+A realocação, então, é feita transportando as caixas, da mais leve para a mais pesada, para lá e de volta; enquanto uma pesada vai, a anterior, mais leve, volta, exceto pela caixa mais pesada, que não é retornada. A partir daí, o processo é reiniciado, mas agora com uma caixa a menos no piso de cá. O ciclo se encerra quando não houver mais caixas para transporte do lado de cá.
 
 ## Uso 
 
@@ -25,7 +25,7 @@ A realocação, então, é feita transportando as caixas, da mais leve para a ma
 - Quantidade de caixas a serem transportadas, como um integer não-negativo (e.g., `3`)
 - Peso de cada caixa, como integers positivos (e.g., `4 10 15`) ou string de integers positivos separados por espaço (e.g., `"4 10 15"`)
 
-Adicionalmente, também é possível fornecer dois arguments adicionais ao final do comando (nessa ordem):
+Adicionalmente, também é possível fornecer dois argumentos adicionais ao final do comando (nessa ordem):
 - `--weight=<integer_positivo>`: determina a diferença de peso máxima suportada pelo mecanismo
 - `--debug`: apresenta mensagens de log e executa casos de teste.
 
@@ -47,6 +47,7 @@ $ ./eSapiensAlg 6 \
 ```
 
 ![pesos multiline](https://i.imgur.com/qb3bo7d.png)
+
 Observação: é necessário um espaço antes do `\` ou, alternativamente, na segunda linha antes do primeiro peso; do contrário o primeiro peso é concatenado a quantidade de caixas, o que, nesse exemplo, resultaria em erro, pois seriam informadas 616 caixas, mas somente 5 pesos.
 
 #### Com logs de debug e execução de testes
@@ -59,7 +60,7 @@ $ ./eSapiensAlg 5 5 2 20 18 10 --debug
 ```bash
 $ ./eSapiensAlg 5 "5 2 20 18 10" --weight=7
 
-$ ./eSapiensAlg 5 5 2 20 18 10 --weight=7 --debug
+$ ./eSapiensAlg 5 5 2 20 18 10 --weight=9 --debug
 ```
 ![especificando peso](https://i.imgur.com/59fdACP.png)
 
@@ -91,5 +92,7 @@ Esse arquivo contém os seguintes elementos, na ordem:
 No Xcode, é possível configurar os argumentos CLI usados para executar a aplicação editando o esquema de execução. Isso é feito selecionando, na barra de tarefas, o combobox posicionado entre o botão "stop" e o combobox de dispositivo, daí a opção "Edit Scheme..." e, então, selecionando a aba "Arguments" na janela que abrir.
 
 No projeto, há o esquema "eSapiensAlgArgs", que já contém alguns conjuntos de argumentos preparados, bastando selecionar quais deles se deseja usar nas próximas execuções.
+
+Como é possível perceber, não foi tomado particular cuidado com este repósitório, devido ao requisito de usar um único arquivo-fonte, o que torna controle de versão algo *not cool, dood*.
 
 -- Luiz Soares dos Santos Baglie (luizssb.biz {at} gmail {dot} com)
