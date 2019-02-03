@@ -8,6 +8,141 @@
 
 import Foundation
 
+enum BoxesError : Error {
+    case nonPositiveWeight
+}
+
+/**
+ Given an array of weights, sorts it and, for each element, checks whether the
+ difference in weight between it and its neighbors exceeds a given value.
+ 
+ - returns:
+ `true` if the difference of weight between boxes never exceeds the value of
+ `maxDiff`, `false` otherwise
+ 
+ - throws:
+ `BoxesError.nonPositiveWeight`, if any box has null or negative weight.
+ 
+ - parameters
+ - boxesWeights: array of boxes to be checked.
+ - maxDiff: maximum allowed difference in weight between two boxes.
+ */
+func checkBoxesWeightDiff(boxesWeights: [Int], maxDiff: Int) throws
+    -> Bool {
+        var prevWeight = 0
+        for weight in boxesWeights.sorted() {
+            guard weight > 0 else {
+                throw BoxesError.nonPositiveWeight
+            }
+            
+            if weight - prevWeight > maxDiff {
+                return false
+            }
+            
+            prevWeight = weight
+        }
+        return true
+}
+
+/**
+ Verifica se um conjunto de caixas pode ser transportado de um piso para outro
+ usando o mecanismo de polias descrito no enunciado do teste.
+ 
+ - returns:
+ `true` se o transporte das caixas pode ser realizado, `false` do contrário.
+ 
+ - throws:
+ `BoxesError.nonPositiveWeight`, se alguma das caixas tem peso nulo ou negativo.
+ 
+ - parameters
+ - forWeights boxesWeights: array com o peso das caixas a serem transportadas.
+ - maxWeightDiff: diferença máxima de peso entre os elevadores da polia.
+ - debugging: indica modo de debug.
+ 
+ O mecanismo funciona por meio de dois elevadores conectados através de uma
+ corda que passa por uma polia; quando um deles sobe, o outro desce. Contudo, o
+ mecanismo apresenta uma limitação: a diferença de peso entre os conteúdos de
+ cada elevador nunca pode exceder um determinado peso (postulado no enunciado
+ como **8**, embora, aqui, parametrizável).
+ 
+ Sendo assim, esta função verifica se, dado um um array com os pesos das caixas
+ em um conjunto, é possível transportar todas elas de um piso para outro, usando
+ esse mecanismo de polia.
+ 
+ Verdade seja dita, tal verificação pode consistir somente em ordenar as caixas
+ por peso e verificar se a diferença de peso entre duas delas consecutivas não
+ excede o máximo especificado. A razão para isso é que, uma vez confirmado esse
+ detalhe, **sempre** será possível transportá-las todas sem quebrar o mecanismo.
+ Isso, então, é feito transportando as caixas, da mais leve para a mais pesada,
+ para lá e de volta; enquanto uma pesada vai, a anterior, mais leve, volta,
+ exceto pela caixa mais pesada, que não é retornada. A partir daí, o processo é
+ reiniciado, mas agora com uma caixa a menos no piso de cá. O ciclo, obviamente,
+ encerra quando todas as caixas terminarem de ser transportadas. Dado isto, a
+ verdadeira *estrela do show* aqui é a função
+ checkBoxesWeightDiff(boxesWeights:maxDiff:), que faz essa verificação.
+ 
+ Esta função aqui meramente apresenta um algoritmo para imprimir no console o
+ processo de transporte das caixas, a fim de tornar o processo mais *visual*.
+ Isso, todavia, é feito somente quando passada a flag de debug.
+ 
+ Nota: *per* enunciado, o número de viagens dos elevadores é ignorado. Em todo
+ caso, essa função demonstra, para apresentação dos logs, uma otimização simples
+ para reduzir este número: caso o peso da próxima caixa seja menor que a
+ diferença máxima de peso, não retorna a caixa atual.
+ */
+func checkBoxTransportPossibility(
+    forWeights boxesWeights: [Int],
+    maxWeightDiff: Int,
+    debugging: Bool = false
+    ) throws -> Bool {
+    
+    guard boxesWeights.count > 0 else { return true }
+    
+    guard try checkBoxesWeightDiff(
+        boxesWeights: boxesWeights, maxDiff: maxWeightDiff
+        ) else { return false }
+    
+    func log(_ message:String) {
+        if debugging {
+            print(message)
+        }
+    }
+    
+    var here = boxesWeights.sorted()
+    var there = [Int]()
+    
+    // Luiz: perhaps, a "better" approach would be to name these variables
+    // 'elevator1' and 'elevator2', however, then, for the sake of the
+    // demonstration, I would have to exchange their values at each iteration so
+    // as to demonstrate that the elevator that went up is now coming down, and
+    // vice-versa. Using these names, this is implied and everyone's happy.
+    var sending: Int,
+        receiving = 0
+    
+    repeat {
+        sending = here.removeFirst()
+        log("sending \(sending), receiving \(receiving), diff \(sending - receiving)")
+        
+        there.append(sending)
+        
+        if (here.count > 0) {
+            if there.last! > here.first! || here.first! <= maxWeightDiff {
+                // Luiz: acabou de transportar a mais pesada ou pode transportar
+                // sem contrapeso. Reinicia o processo.
+                receiving = 0
+            } else {
+                receiving = there.removeLast()
+                here.append(receiving)
+            }
+        }
+    } while (!here.isEmpty)
+    
+    log("here: \(here)")
+    log("there: \(there)")
+    
+    return true
+}
+
 struct Constants {
     static let weightFlag = "--weight="
     static let debugFlag = "--debug"
@@ -40,7 +175,7 @@ struct Args {
     static let defaultArgs = Args(boxesWeights: [
         10, 4, 15
         ])
-
+    
     init(fromCLI args: [String]) throws {
         guard args.count > 1 else {
             self = Args.defaultArgs
@@ -51,7 +186,7 @@ struct Args {
         guard args.count >= 3 else {
             throw ArgsError(message: "Insufficient number of args.")
         }
-
+        
         guard let numberOfBoxes = Int(args[Constants.numberOfBoxesIndex]) else {
             throw ArgsError(message: "C'mon, give me at least one box, will ya?")
         }
@@ -87,7 +222,7 @@ struct Args {
                     .map { $0.description }
                 : Array(args[
                     Constants.firstBoxWeightIndex..<lastBoxIndex
-                ])
+                    ])
         
         boxesWeights = try strBoxWeights.map { box in
             guard let boxWeight = Int(box) else {
@@ -108,157 +243,18 @@ struct Args {
     }
 }
 
-enum BoxesError : Error {
-    case nonPositiveWeight
-}
-
 // Luiz: leaving as var so as to allow debugging down below.
-var commandLineArgs: Args
+let commandLineArgs: Args
 do {
     commandLineArgs = try Args(fromCLI: CommandLine.arguments)
-} catch let error as ArgsError {
-    fatalError(error.message)
-}
-
-func log(_ message: String) {
-    if commandLineArgs.debug {
-        print("[DEBUG]", message)
-    }
-}
-
-/**
- Verifica se um conjunto de caixas pode ser transportado de um piso para outro
- usando o mecanismo de polias descrito no enunciado do teste.
- 
- - returns:
- `true` se o transporte das caixas pode ser realizado, `false` do contrário.
-
- - throws:
- `BoxesError.nonPositiveWeight`, se alguma das caixas tem peso nulo ou negativo.
- 
- - parameters
-     - forWeights boxesWeights: array com o peso das caixas a serem transportadas.
-     - maxWeightDiff: diferença máxima de peso entre os elevadores da polia.
- 
- O mecanismo funciona por meio de dois elevadores conectados através de uma
- corda que passa por uma polia; quando um deles sobe, o outro desce. Contudo, o
- mecanismo apresenta uma limitação: a diferença de peso entre os conteúdos de
- cada elevador nunca pode exceder um determinado peso (postulado no enunciado
- como **8**, embora, aqui, parametrizável).
- 
- Sendo assim, esta função verifica se, dado um um array com os pesos das caixas
- em um conjunto, é possível transportar todas elas de um piso para outro, usando
- esse mecanismo de polia.
- 
- Verdade seja dita, tal verificação pode consistir somente em ordenar as caixas
- por peso e verificar se a diferença de peso entre duas delas consecutivas não
- excede o máximo especificado. A razão para isso é que, uma vez confirmado esse
- detalhe, **sempre** será possível transportá-las todas sem quebrar o mecanismo.
- Isso, então, é feito transportando as caixas, da mais leve para a mais pesada,
- para lá e de volta; enquanto uma pesada vai, a anterior, mais leve, volta,
- exceto pela caixa mais pesada, que não é retornada. A partir daí, o processo é
- reiniciado, mas agora com uma caixa a menos no piso de cá. O ciclo, obviamente,
- encerra quando todas as caixas terminarem de ser transportadas. Dado isto, a
- verdadeira *estrela do show* aqui é a função
- checkBoxesWeightDiff(boxesWeights:maxDiff:), que faz essa verificação.
- 
- Esta função aqui meramente apresenta um algoritmo para imprimir no console o
- processo de transporte das caixas, a fim de tornar o processo mais *visual*.
- Isso, todavia, é feito somente quando passada a flag de debug.
- 
- Nota: *per* enunciado, o número de viagens dos elevadores é ignorado. Em todo
- caso, essa função demonstra, para apresentação dos logs, algumas otimizações
- para reduzir tal número. Mais especificamente, ela não traz as caixas leves de
- volta enquanto puder levar as mais pesadas para o outro piso sem estourar o
- limite de peso.
- */
-func checkBoxTransportPossibility(
-    forWeights boxesWeights: [Int], maxWeightDiff: Int
-    ) throws -> Bool {
-    
-    guard boxesWeights.count > 0 else { return true }
-    
-    guard try checkBoxesWeightDiff(
-        boxesWeights: boxesWeights, maxDiff: maxWeightDiff
-        ) else { return false }
-    
-    var here = boxesWeights.sorted()
-    var there = [Int]()
-    
-    // Luiz: perhaps, a "better" approach would be to name these variables
-    // 'elevator1' and 'elevator2', however, then, for the sake of
-    // demonstration, I would have to exchange their values at each iteration so
-    // as to demonstrate that the elevator that went up is now coming down, and
-    // vice-versa. With these names, this gets implied and everyone's happy.
-    var sending = here.removeFirst(),
-        receiving = 0
-    
-    func logTransport() {
-        log("sending \(sending), receiving \(receiving), diff \(sending - receiving)")
-    }
-    
-    logTransport()
-    while !here.isEmpty {
-        there.append(sending)
-        
-        if there.last! > here.first! {
-            // Luiz: acabou de transportar a mais pesada. Reinicia o processo.
-            receiving = 0
-        } else if here.first! - receiving > maxWeightDiff{ // Luiz
-            // Luiz: só traz a última caixa enviada de volta se, ao manter a
-            // caixa atual do elevador 2, a diferença de peso estoura o limite.
-            receiving = there.removeLast()
-            here.append(receiving)
-        }
-        sending = here.removeFirst()
-        logTransport()
-    }
-    
-    there.append(sending)
-    log("here: \(here)")
-    log("there: \(there)")
-    
-    return true
-}
-
-/**
- Given an array of weights, sorts it and, for each element, checks whether the
- difference in weight between it and its neighbors exceeds a given value.
- 
- - returns:
- `true` if the difference of weight between boxes never exceeds the value of
- `maxDiff`, `false` otherwise
- 
- - throws:
- `BoxesError.nonPositiveWeight`, if any box has null or negative weight.
- 
- - parameters
-    - boxesWeights: array of boxes to be checked.
-    - maxDiff: maximum allowed difference in weight between two boxes.
- */
-func checkBoxesWeightDiff(boxesWeights: [Int], maxDiff: Int) throws
-    -> Bool {
-    var prevWeight = 0
-    for weight in boxesWeights.sorted() {
-        guard weight >= 0 else {
-            throw BoxesError.nonPositiveWeight
-        }
-        
-        if weight - prevWeight > maxDiff {
-            return false
-        }
-        
-        prevWeight = weight
-    }
-    return true
-}
-
-do {
     let isTransportPossible = try checkBoxTransportPossibility(
         forWeights: commandLineArgs.boxesWeights,
-        maxWeightDiff: commandLineArgs.maxWeightDifference
+        maxWeightDiff: commandLineArgs.maxWeightDifference,
+        debugging: commandLineArgs.debug
     )
     print(isTransportPossible ? "S" : "N")
+} catch let error as ArgsError {
+    fatalError(error.message)
 } catch let error as BoxesError {
     fatalError("\(error)")
 }
@@ -266,13 +262,25 @@ do {
 // Luiz: debug.
 if commandLineArgs.debug {
     print("Debugging")
-    commandLineArgs.maxWeightDifference = 8
-//    commandLineArgs.boxesWeights = [15, 8, 10]
-    commandLineArgs.boxesWeights = [25, 2, 7, 15, 40, 30, 35, 20]
-//    commandLineArgs.boxesWeights = [14, 10, 20, 23]
-//    commandLineArgs.boxesWeights = [8]
-    _ = try? checkBoxTransportPossibility(
-        forWeights: commandLineArgs.boxesWeights,
-        maxWeightDiff: commandLineArgs.maxWeightDifference
-    )
+    let maxWeightDifference = 8
+    let testDataSet = [
+        [15, 8, 10],
+        [25, 2, 7, 15, 40, 30, 35, 20],
+        [14, 10, 20, 23],
+        [8],
+        [1, 8, 15, 16, 17, 18, 25, 0],
+        [1, 8, 15, 16, 17, 18, 25]
+    ]
+    
+    for idx in 0..<testDataSet.count {
+        print("\n\nTest case", idx, testDataSet[idx])
+        do {
+            print("transport:", try checkBoxTransportPossibility(
+                forWeights: testDataSet[idx],
+                maxWeightDiff: maxWeightDifference, debugging: true
+            ))
+        } catch let error as BoxesError {
+            print("error", error)
+        }
+    }
 }

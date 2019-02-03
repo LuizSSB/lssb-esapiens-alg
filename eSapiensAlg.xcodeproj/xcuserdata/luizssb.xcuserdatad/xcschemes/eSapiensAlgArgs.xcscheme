@@ -63,7 +63,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "3 &quot;4 17 8&quot;"
+            argument = "6 &quot;4 14 8 4 2 19 &quot;"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -71,7 +71,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "1 4"
+            argument = "0 3"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
