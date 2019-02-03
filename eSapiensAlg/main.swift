@@ -102,9 +102,13 @@ func checkBoxTransportPossibility(
         boxesWeights: boxesWeights, maxDiff: maxWeightDiff
         ) else { return false }
     
+    guard debugging else {
+        return true
+    }
+    
     func log(_ message:String) {
         if debugging {
-            print(message)
+            print("[DEBUG]", message)
         }
     }
     
@@ -261,7 +265,7 @@ do {
 
 // Luiz: debug.
 if commandLineArgs.debug {
-    print("Debugging")
+    print("\nDebugging")
     let maxWeightDifference = 8
     let testDataSet = [
         [15, 8, 10],
@@ -273,7 +277,7 @@ if commandLineArgs.debug {
     ]
     
     for idx in 0..<testDataSet.count {
-        print("\n\nTest case", idx, testDataSet[idx])
+        print("Test case", idx, testDataSet[idx])
         do {
             print("transport:", try checkBoxTransportPossibility(
                 forWeights: testDataSet[idx],
@@ -282,5 +286,6 @@ if commandLineArgs.debug {
         } catch let error as BoxesError {
             print("error", error)
         }
+        print("\n")
     }
 }
