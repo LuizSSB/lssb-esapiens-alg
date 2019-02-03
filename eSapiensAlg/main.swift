@@ -21,7 +21,8 @@ struct ArgsError: Error {
     
     init(message: String) {
         self.message = message + """
-         Must receive one of following:
+        
+        Invocation must provide one of the following:
         - positive number of boxes, followed by their weights as a string of space-separated integers;
         - positive number of boxes, followed by the weight of each box as an integer.
         Optionally, you can also:
@@ -59,9 +60,11 @@ struct Args {
         
         let weightParamIndex = args.count - (debug ? 2 : 1)
         let weightParam = args[weightParamIndex]
+        let lastBoxIndex: Int
         if weightParam.contains(Constants.weightFlag) {
-            // Luiz: you CANNOT take a look at this and tell me Swift has a good
-            // string API; there is simply no way. What were they thinking!?
+            // Luiz: you CANNOT take a look at this and honestly tell me Swift
+            // has a good string API; there is simply no way.
+            // "WHAT WERE THEY THINKING" - avgn
             let index = weightParam.index(
                 weightParam.startIndex,
                 offsetBy: Constants.weightFlag.count
@@ -71,8 +74,10 @@ struct Args {
                 throw ArgsError(message: "Invalid max weight parameter")
             }
             maxWeightDifference = paramValue
+            lastBoxIndex = weightParamIndex
         } else {
             maxWeightDifference = Constants.defaultWeight
+            lastBoxIndex = weightParamIndex + 1
         }
         
         let strBoxWeights =
@@ -81,19 +86,19 @@ struct Args {
                     .split(separator: " ")
                     .map { $0.description }
                 : Array(args[
-                    Constants.firstBoxWeightIndex..<weightParamIndex
+                    Constants.firstBoxWeightIndex..<lastBoxIndex
                 ])
         
-        guard numberOfBoxes == strBoxWeights.count else {
-            throw ArgsError(message: "Provided number of boxes don't match actual number of boxes.")
+        boxesWeights = try strBoxWeights.map { box in
+            guard let boxWeight = Int(box) else {
+                throw ArgsError(message: "Invalid box weight \(box)")
+            }
+            return boxWeight
         }
         
-        boxesWeights = try strBoxWeights.map { box in
-                guard let boxWeight = Int(box) else {
-                    throw ArgsError(message: "Invalid box weight \(box)")
-                }
-                return boxWeight
-            }
+        guard numberOfBoxes == strBoxWeights.count else {
+            throw ArgsError(message: "Provided number of boxes doesn't match actual number of boxes.")
+        }
     }
     
     init(boxesWeights: [Int], maxWeightDifference: Int = Constants.defaultWeight, debug: Bool = true) {
@@ -170,7 +175,9 @@ func log(_ message: String) {
 func checkBoxTransportPossibility(
     forWeights boxesWeights: [Int], maxWeightDiff: Int
     ) throws -> Bool {
-
+    
+    guard boxesWeights.count > 0 else { return true }
+    
     guard try checkBoxesWeightDiff(
         boxesWeights: boxesWeights, maxDiff: maxWeightDiff
         ) else { return false }
@@ -178,7 +185,7 @@ func checkBoxTransportPossibility(
     var here = boxesWeights.sorted()
     var there = [Int]()
     
-    // Luiz: perhaps, the "better" approach would be to name these variables
+    // Luiz: perhaps, a "better" approach would be to name these variables
     // 'elevator1' and 'elevator2', however, then, for the sake of
     // demonstration, I would have to exchange their values at each iteration so
     // as to demonstrate that the elevator that went up is now coming down, and
@@ -258,9 +265,10 @@ do {
 
 // Luiz: debug.
 if commandLineArgs.debug {
+    print("Debugging")
     commandLineArgs.maxWeightDifference = 8
-    commandLineArgs.boxesWeights = [15, 8, 10]
-//    commandLineArgs.boxesWeights = [25, 2, 7, 15, 40, 30, 35, 20]
+//    commandLineArgs.boxesWeights = [15, 8, 10]
+    commandLineArgs.boxesWeights = [25, 2, 7, 15, 40, 30, 35, 20]
 //    commandLineArgs.boxesWeights = [14, 10, 20, 23]
 //    commandLineArgs.boxesWeights = [8]
     _ = try? checkBoxTransportPossibility(
