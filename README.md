@@ -22,10 +22,12 @@ A realocação, então, é feita transportando as caixas, da mais leve para a ma
 ## Uso 
 
 *Per* enunciado do teste, a aplicação necessita de, pelo menos, dois argumentos:
+
 - Quantidade de caixas a serem transportadas, como um integer não-negativo (e.g., `3`)
 - Peso de cada caixa, como integers positivos (e.g., `4 10 15`) ou string de integers positivos separados por espaço (e.g., `"4 10 15"`)
 
 Adicionalmente, também é possível fornecer dois argumentos adicionais ao final do comando (nessa ordem):
+
 - `--weight=<integer_positivo>`: determina a diferença de peso máxima suportada pelo mecanismo
 - `--debug`: apresenta mensagens de log e executa casos de teste.
 
@@ -81,6 +83,7 @@ $ ./eSapiensAlg
 *Per* enunciado, todo o código-fonte da aplicação está num único arquivo, *main.swift*.
 
 Esse arquivo contém os seguintes elementos, na ordem:
+
 - `BoxesError`: enum representando possíveis erros de execução do algoritmo.
 - `checkBoxesWeightDiff(boxesWeights:maxDiff:)`: verifica se existe alguma diferença de peso entre as caixas que impossibilitaria o transporte.
 - `checkBoxTransportPossibility(forWeights boxesWeights:maxWeightDiff:debugging:)`: função "principal", que determina se o conjunto de caixas pode ser transportado ou não; documentação quebra padrão para não deixar dúvidas.
@@ -93,6 +96,6 @@ No Xcode, é possível configurar os argumentos CLI usados para executar a aplic
 
 No projeto, há o esquema "eSapiensAlgArgs", que já contém alguns conjuntos de argumentos preparados, bastando selecionar quais deles se deseja usar nas próximas execuções.
 
-Como é possível perceber, não foi tomado particular cuidado com este repósitório, devido ao requisito de usar um único arquivo-fonte, o que torna controle de versão algo *not cool, dood*.
+Como é possível perceber, não foi tomado particular cuidado com as mensagens de commit e branching deste repositório. Dado o requisito de usar um único arquivo-fonte, tal cuidado com controle de versão é algo *not cool, dood*.
 
 -- Luiz Soares dos Santos Baglie (luizssb.biz {at} gmail {dot} com)

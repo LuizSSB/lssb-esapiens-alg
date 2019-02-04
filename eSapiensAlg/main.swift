@@ -148,8 +148,9 @@ func checkBoxTransportPossibility(
 }
 
 struct Constants {
-    static let weightFlag = "--weight="
-    static let debugFlag = "--debug"
+    static let optionPrefix = "--"
+    static let weightFlag = "\(Constants.optionPrefix)weight="
+    static let debugFlag = "\(Constants.optionPrefix)debug"
     static let defaultWeight = 8
     static let numberOfBoxesIndex = 1
     static let firstBoxWeightIndex = 2
@@ -195,28 +196,30 @@ struct Args {
             throw ArgsError(message: "C'mon, give me at least one box, will ya?")
         }
         
-        debug = args.last == Constants.debugFlag
+        let debugArgIndex = args.index { $0.contains(Constants.debugFlag) }
+        debug = debugArgIndex != nil
         
-        let weightParamIndex = args.count - (debug ? 2 : 1)
-        let weightParam = args[weightParamIndex]
         let lastBoxIndex: Int
-        if weightParam.contains(Constants.weightFlag) {
+        let weightArgIndex = args.index { $0.contains(Constants.weightFlag) }
+        if let weightArgIndex = weightArgIndex {
+            let weightArg = args[weightArgIndex]
+            
             // Luiz: you CANNOT take a look at this and honestly tell me Swift
             // has a good string API; there is simply no way.
             // "WHAT WERE THEY THINKING" - avgn
-            let index = weightParam.index(
-                weightParam.startIndex,
+            let index = weightArg.index(
+                weightArg.startIndex,
                 offsetBy: Constants.weightFlag.count
             )
-            let sub = weightParam.suffix(from: index)
-            guard let paramValue = Int(sub) else {
+            let sub = weightArg.suffix(from: index)
+            guard let argValue = Int(sub) else {
                 throw ArgsError(message: "Invalid max weight parameter")
             }
-            maxWeightDifference = paramValue
-            lastBoxIndex = weightParamIndex
+            maxWeightDifference = argValue
+            lastBoxIndex = weightArgIndex
         } else {
             maxWeightDifference = Constants.defaultWeight
-            lastBoxIndex = weightParamIndex + 1
+            lastBoxIndex = debug ? debugArgIndex! : args.count
         }
         
         let strBoxWeights =
